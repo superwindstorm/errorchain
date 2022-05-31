@@ -20,52 +20,50 @@ const PACKAGE_NAME = "github.com/superwindstorm/errorchain_test"
 // }
 
 func errorOccures() *errorchain.Error {
-	return &errorchain.Error{
-		Code:   0x00000001,
-		Source: nil,
-		Pkg:    PACKAGE_NAME,
-		Func:   "errorOccures",
-		Msg:    "invalid input",
-	}
+	// return &errorchain.Error{
+	// 	Code:   0x00000001,
+	// 	Source: nil,
+	// 	Pkg:    PACKAGE_NAME,
+	// 	Func:   "errorOccures",
+	// 	Msg:    "invalid input",
+	// }
+	return errorchain.NewUtil(nil, 0x00000001, "invalid input")
 }
 
 func TestError1(t *testing.T) {
-	e := errorOccures()
-	e3 := &errorchain.Error{
-		Code:   0x00000002,
-		Source: e,
-		Pkg:    PACKAGE_NAME,
-		Func:   "TestError1",
-	}
-	t.Log(e3)
+	e := errorchain.NewUtil(errorOccures(), 0x00000002, "oops, some error occurred")
+	// e := &errorchain.Error{
+	// 	Code:   0x00000002,
+	// 	Source: e,
+	// 	Pkg:    PACKAGE_NAME,
+	// 	Func:   "TestError1",
+	// }
+
+	fmt.Println(e.PrettyString())
+
 }
 
 func errorOccureFromStd() *errorchain.Error {
-	e1 := errors.New("error caused by stdlib.")
-	return &errorchain.Error{
-		Code:   0x00000001,
-		Source: e1,
-		Pkg:    PACKAGE_NAME,
-		Func:   "errorOccureFromStd",
-		Msg:    "invalid input",
-	}
+	return errorchain.NewUtil(errors.New("error caused by stdlib."), 0x00000001, "invalid input")
 }
 
 func TestError2(t *testing.T) {
 	e := errorOccureFromStd()
-	e3 := &errorchain.Error{
-		Code:   0x00000002,
-		Source: e,
-		Pkg:    PACKAGE_NAME,
-		Func:   "TestError2",
-		// leave info empty
-	}
-	e4 := errorchain.New(e3, 0x00000003, "no such file error", PACKAGE_NAME, "TestError2")
-	t.Log(e3)
-	t.Log(e4)
+	// 手动填写Pkg和Func
+	// e2 := &errorchain.Error{
+	// 	Code:   0x00000002,
+	// 	Source: e,
+	// 	Pkg:    PACKAGE_NAME,
+	// 	Func:   "TestError2",
+	// 	// leave info empty
+	// }
 
-	fmt.Println(e3.PrettyString())
-	fmt.Println(e4.PrettyString())
+	// or
+	// 使用runtime自动获取。
+	e2 := errorchain.NewUtil(e, 0x00000002, "info")
+	e3 := errorchain.NewUtil(e2, 0x00000003, "no such file error")
+	s := e3.PrettyString()
+	fmt.Println(s)
 }
 
 // two recursive errors

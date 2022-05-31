@@ -42,3 +42,9 @@ return &errorchain.Error{
 	{code: 0x00000001, msg: "invalid input", in: "github.com/superwindstorm/errorchain_test.errorOccureFromStd"}, caused by
 	error caused by stdlib.
 ```
+
+# About `NewUtil`
+```go
+func NewUtil(source error, code uint32, msg string) *Error
+```
+利用runtime.Caller自动获取NewUtil的调用函数名（包括包路径）。但是runtime.Caller可能获取失败。所以请自行判断用New还是NewUtil。

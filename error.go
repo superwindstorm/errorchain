@@ -5,6 +5,7 @@ package errorchain
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -16,14 +17,21 @@ func SetMaxRecurse(n int) {
 	MAX_RECURSE_LEVEL = n
 }
 
+// Error is a type implements the error interface.
+// Source: source of the error, returned by the calling other functions.
+// Code: unique error code for each error.
+// Msg: additional information about the error.
+// Pkg: the package where error occurred.
+// Func: the function where error occurred.
 type Error struct {
-	Source error  // source of the error, returned by the calling other functions.
-	Code   uint32 // unique error code for each error.
-	Msg    string // additional information about the error.
-	Pkg    string // the package where error occurred.
-	Func   string // the function where error occurred.
+	Source error
+	Code   uint32
+	Msg    string
+	Pkg    string
+	Func   string
 }
 
+// New return a Error with given params.
 func New(source error, code uint32, msg string, pkg string, funcName string) *Error {
 	return &Error{
 		Source: source,
@@ -33,6 +41,24 @@ func New(source error, code uint32, msg string, pkg string, funcName string) *Er
 		Func:   funcName,
 	}
 }
+
+// NewUtil is the same with New, but use runtime to find the Pkg and Func.
+// runtime.Caller may failed (and I don't know when it will fail).
+// So use NewUtil as your risk.
+// TODO: When runtime.Caller failed?
+func NewUtil(source error, code uint32, msg string) *Error {
+	e := &Error{
+		Source: source,
+		Msg:    msg,
+		Code:   code,
+	}
+	if counter, _, _, ok := runtime.Caller(1); ok {
+		e.Pkg = runtime.FuncForPC(counter).Name()
+	}
+	// If failed, the Pkg and Func are nil.
+	return e
+}
+
 func (e *Error) Error() string {
 	return e.String()
 }
@@ -59,7 +85,16 @@ func (e *Error) display(sb *strings.Builder, lf bool, n int) {
 		sb.WriteString("...")
 		return
 	}
-	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"%s.%s\"}", e.Code, e.Msg, e.Pkg, e.Func))
+	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.Code, e.Msg))
+	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.Code, e.Msg))
+	if len(e.Pkg) > 0 {
+		sb.WriteString(e.Pkg)
+	}
+	if len(e.Func) > 0 {
+		sb.WriteString(".")
+		sb.WriteString(e.Func)
+	}
+	sb.WriteString("\"}")
 	if e.Source != nil {
 		sb.WriteString(", caused by")
 		if lf {
