@@ -10,7 +10,7 @@ import (
 )
 
 // MAX_RECURSE_LEVEL 最多迭代追溯Source次数.
-var MAX_RECURSE_LEVEL = 8
+var MAX_RECURSE_LEVEL = 16
 
 //
 func SetMaxRecurse(n int) {
