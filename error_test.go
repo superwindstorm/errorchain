@@ -32,14 +32,9 @@ func errorOccures() *errorchain.Error {
 
 func TestError1(t *testing.T) {
 	e := errorchain.NewUtil(errorOccures(), 0x00000002, "oops, some error occurred")
-	// e := &errorchain.Error{
-	// 	Code:   0x00000002,
-	// 	Source: e,
-	// 	Pkg:    PACKAGE_NAME,
-	// 	Func:   "TestError1",
-	// }
+	e2 := errorchain.Wrapper(e, 1)
 
-	fmt.Println(e.PrettyString())
+	fmt.Println(e2.PrettyString())
 
 }
 

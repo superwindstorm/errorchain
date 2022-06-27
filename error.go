@@ -6,6 +6,7 @@ package errorchain
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -29,6 +30,7 @@ type Error struct {
 	Msg    string
 	Pkg    string
 	Func   string
+	tag    int // a wrapper error could use tag to distinguish between wrapper errors.
 }
 
 // New return a Error with given params.
@@ -59,6 +61,18 @@ func NewUtil(source error, code uint32, msg string) *Error {
 	return e
 }
 
+// Just a wrapper around source, use 1,2,3 as tags(not 0).
+func Wrapper(source error, tag int) *Error {
+	e := &Error{
+		Source: source,
+		tag:    tag,
+	}
+	if counter, _, _, ok := runtime.Caller(1); ok {
+		e.Pkg = runtime.FuncForPC(counter).Name()
+	}
+	return e
+}
+
 func (e *Error) Error() string {
 	return e.String()
 }
@@ -86,13 +100,16 @@ func (e *Error) display(sb *strings.Builder, lf bool, n int) {
 		return
 	}
 	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.Code, e.Msg))
-	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.Code, e.Msg))
 	if len(e.Pkg) > 0 {
 		sb.WriteString(e.Pkg)
 	}
 	if len(e.Func) > 0 {
 		sb.WriteString(".")
 		sb.WriteString(e.Func)
+	}
+	if e.tag > 0 {
+		sb.WriteString(":")
+		sb.WriteString(strconv.Itoa(e.tag))
 	}
 	sb.WriteString("\"}")
 	if e.Source != nil {
