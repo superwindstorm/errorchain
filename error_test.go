@@ -1,11 +1,9 @@
-package errorchain_test
+package errorchain
 
 import (
 	"errors"
 	"fmt"
 	"testing"
-
-	"github.com/superwindstorm/errorchain"
 )
 
 const PACKAGE_NAME = "github.com/superwindstorm/errorchain_test"
@@ -19,33 +17,33 @@ const PACKAGE_NAME = "github.com/superwindstorm/errorchain_test"
 // 	fmt.Println(PACKAGE_NAME)
 // }
 
-func errorOccures() *errorchain.Error {
-	// return &errorchain.Error{
+func errorOccures() *Error {
+	// return &Error{
 	// 	Code:   0x00000001,
 	// 	Source: nil,
 	// 	Pkg:    PACKAGE_NAME,
 	// 	Func:   "errorOccures",
 	// 	Msg:    "invalid input",
 	// }
-	return errorchain.NewUtil(nil, 0x00000001, "invalid input")
+	return NewUtil(nil, 0x00000001, "invalid input")
 }
 
 func TestError1(t *testing.T) {
-	e := errorchain.NewUtil(errorOccures(), 0x00000002, "oops, some error occurred")
-	e2 := errorchain.Wrapper(e, 1)
+	e := NewUtil(errorOccures(), 0x00000002, "oops, some error occurred")
+	e2 := Wrapper(e, 1)
 
 	fmt.Println(e2.PrettyString())
 
 }
 
-func errorOccureFromStd() *errorchain.Error {
-	return errorchain.NewUtil(errors.New("error caused by stdlib."), 0x00000001, "invalid input")
+func errorOccureFromStd() *Error {
+	return NewUtil(errors.New("error caused by stdlib."), 0x00000001, "invalid input")
 }
 
 func TestError2(t *testing.T) {
 	e := errorOccureFromStd()
 	// 手动填写Pkg和Func
-	// e2 := &errorchain.Error{
+	// e2 := &Error{
 	// 	Code:   0x00000002,
 	// 	Source: e,
 	// 	Pkg:    PACKAGE_NAME,
@@ -55,29 +53,29 @@ func TestError2(t *testing.T) {
 
 	// or
 	// 使用runtime自动获取。
-	e2 := errorchain.NewUtil(e, 0x00000002, "info")
-	e3 := errorchain.NewUtil(e2, 0x00000003, "no such file error")
+	e2 := NewUtil(e, 0x00000002, "info")
+	e3 := NewUtil(e2, 0x00000003, "no such file error")
 	s := e3.PrettyString()
 	fmt.Println(s)
 }
 
 // two recursive errors
 func TestErrorLoop(t *testing.T) {
-	errorchain.SetMaxRecurse(100)
-	e1 := &errorchain.Error{
-		Code: 0x00000001,
-		Pkg:  PACKAGE_NAME,
-		Func: "TestErrorLoop",
-		Msg:  "error 1",
+	SetMaxRecurse(100)
+	e1 := &Error{
+		code: 0x00000001,
+		pkg:  PACKAGE_NAME,
+		fn:   "TestErrorLoop",
+		msg:  "error 1",
 	}
-	e2 := &errorchain.Error{
-		Code:   0x00000002,
-		Source: e1,
-		Pkg:    PACKAGE_NAME,
-		Func:   "TestErrorLoop",
-		Msg:    "error 2",
+	e2 := &Error{
+		code:   0x00000002,
+		source: e1,
+		pkg:    PACKAGE_NAME,
+		fn:     "TestErrorLoop",
+		msg:    "error 2",
 	}
-	e1.Source = e2
+	e1.source = e2
 	// Stop recurce after 8 times.
 	fmt.Println(e1.PrettyString())
 	fmt.Println()

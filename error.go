@@ -25,22 +25,22 @@ func SetMaxRecurse(n int) {
 // Pkg: the package where error occurred.
 // Func: the function where error occurred.
 type Error struct {
-	Source error
-	Code   uint32
-	Msg    string
-	Pkg    string
-	Func   string
+	source error
+	code   uint32
+	msg    string
+	pkg    string
+	fn     string
 	tag    int // a wrapper error could use tag to distinguish between wrapper errors.
 }
 
 // New return a Error with given params.
 func New(source error, code uint32, msg string, pkg string, funcName string) *Error {
 	return &Error{
-		Source: source,
-		Msg:    msg,
-		Code:   code,
-		Pkg:    pkg,
-		Func:   funcName,
+		source: source,
+		msg:    msg,
+		code:   code,
+		pkg:    pkg,
+		fn:     funcName,
 	}
 }
 
@@ -50,12 +50,12 @@ func New(source error, code uint32, msg string, pkg string, funcName string) *Er
 // TODO: When runtime.Caller failed?
 func NewUtil(source error, code uint32, msg string) *Error {
 	e := &Error{
-		Source: source,
-		Msg:    msg,
-		Code:   code,
+		source: source,
+		msg:    msg,
+		code:   code,
 	}
 	if counter, _, _, ok := runtime.Caller(1); ok {
-		e.Pkg = runtime.FuncForPC(counter).Name()
+		e.pkg = runtime.FuncForPC(counter).Name()
 	}
 	// If failed, the Pkg and Func are nil.
 	return e
@@ -64,13 +64,17 @@ func NewUtil(source error, code uint32, msg string) *Error {
 // Just a wrapper around source, use 1,2,3 as tags(not 0).
 func Wrapper(source error, tag int) *Error {
 	e := &Error{
-		Source: source,
+		source: source,
 		tag:    tag,
 	}
 	if counter, _, _, ok := runtime.Caller(1); ok {
-		e.Pkg = runtime.FuncForPC(counter).Name()
+		e.pkg = runtime.FuncForPC(counter).Name()
 	}
 	return e
+}
+
+func (e *Error) Code() uint32 {
+	return e.code
 }
 
 func (e *Error) Error() string {
@@ -78,7 +82,7 @@ func (e *Error) Error() string {
 }
 
 func (e *Error) Cause() error {
-	return e.Source
+	return e.source
 }
 
 func (e *Error) PrettyString() string {
@@ -99,30 +103,30 @@ func (e *Error) display(sb *strings.Builder, lf bool, n int) {
 		sb.WriteString("...")
 		return
 	}
-	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.Code, e.Msg))
-	if len(e.Pkg) > 0 {
-		sb.WriteString(e.Pkg)
+	sb.WriteString(fmt.Sprintf("{code: 0x%08x, msg: \"%s\", in: \"", e.code, e.msg))
+	if len(e.pkg) > 0 {
+		sb.WriteString(e.pkg)
 	}
-	if len(e.Func) > 0 {
+	if len(e.fn) > 0 {
 		sb.WriteString(".")
-		sb.WriteString(e.Func)
+		sb.WriteString(e.fn)
 	}
 	if e.tag > 0 {
 		sb.WriteString(":")
 		sb.WriteString(strconv.Itoa(e.tag))
 	}
 	sb.WriteString("\"}")
-	if e.Source != nil {
+	if e.source != nil {
 		sb.WriteString(", caused by")
 		if lf {
 			sb.WriteString("\n\t")
 		} else {
 			sb.WriteString(" ")
 		}
-		if ee, ok := e.Source.(*Error); ok {
+		if ee, ok := e.source.(*Error); ok {
 			ee.display(sb, lf, n+1)
 		} else {
-			sb.WriteString(e.Source.Error())
+			sb.WriteString(e.source.Error())
 		}
 	}
 }
