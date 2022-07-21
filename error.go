@@ -68,8 +68,13 @@ func NewUtil(source error, code uint32, msg string) *Error {
 
 // Just a wrapper around source, use 1,2,3 as tags(not 0).
 func Wrapper(source error, tag int) *Error {
+	var code uint32
+	if s, ok := source.(Coder); ok {
+		code = s.Code()
+	}
 	e := &Error{
 		source: source,
+		code:   code,
 		tag:    tag,
 	}
 	if counter, _, _, ok := runtime.Caller(1); ok {
