@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+// Coder return the error code
+type Coder interface {
+	Code() uint32
+}
+
 // MAX_RECURSE_LEVEL 最多迭代追溯Source次数.
 var MAX_RECURSE_LEVEL = 16
 
